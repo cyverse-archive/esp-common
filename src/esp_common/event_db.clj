@@ -1,15 +1,13 @@
 (ns esp-common.event-db
   (:use [slingshot.slingshot :only [try+ throw+]]
         clojure-commons.error-codes
+        esp-common.uuid
         esp-common.storage)
   (:require [clj-http.client :as cl]
             [clj-time.core :as time]
             [clojure.data.json :as json]
             [clojure-commons.file-utils :as ft]
             [cemerick.url :as url]))
-
-;;;This needs to be replaced with something more robust at some point.
-(defn uuid [] (string/upper-case (str (java.util.UUID/randomUUID))))
 
 (defn riak-obj-path
   "Constructs the path portion of a URL for a Riak request."

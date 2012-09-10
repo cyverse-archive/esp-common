@@ -1,12 +1,11 @@
 (ns esp-common.mock-event-db
   (:use esp-common.storage
+        esp-common.uuid
         clojure-commons.error-codes
         [slingshot.slingshot :only [try+ throw+]]))
 
 (def es-coll (atom {}))
 (def e-coll (atom {}))
-
-(defn uuid [] (string/upper-case (str (java.util.UUID/randomUUID))))
 
 (defn failure
   [status msg]
