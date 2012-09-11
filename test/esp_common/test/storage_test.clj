@@ -39,3 +39,19 @@
                                          :unique-tag "testing"
                                          :data {:foo "bar"}}])
 
+(def test-uuid (create-event sm luuid {:foo "bar"}))
+
+(fact
+ test-uuid => matches?
+ (get-event sm test-uuid) => {:uuid test-uuid
+                              :data {:foo "bar"}}
+ (update-event sm test-uuid {:baz "blippy"}) => test-uuid
+ (delete-event sm test-uuid) => test-uuid
+
+ (try+
+  (get-event sm test-uuid)
+  (catch :error_code {:keys [error_code] :as error-map}
+    error-map)) => {:error_code "ERR_REQUEST_FAILED"
+                    :status 404
+                    :body "Couldn't find event."})
+
