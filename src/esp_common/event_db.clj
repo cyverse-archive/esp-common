@@ -23,7 +23,7 @@
 
 (defn riak-url
   "Puts together a URL for a Riak HTTP API request."
-  [base port bucket key & {:as url-query}]
+  [base port bucket key & [url-query]]
   (-> (url/url base :path (riak-obj-path bucket key))
       (assoc :query url-query
              :port (fix-port port))
@@ -50,6 +50,10 @@
            :status     (:status resp)
            :body       (:body resp)}))
 
+(defn nest-data
+  [data-to-nest container-map]
+  (assoc container-map :data data-to-nest))
+
 (defn handle-get-response
   [resp]
   (cond
@@ -58,13 +62,13 @@
    :else                        (request-failed resp)))
 
 (defn handle-put-post-response
-  [resp]
+  [resp uuid]
   (cond 
    (<= 200 (:status resp) 299) uuid
    :else                       (request-failed resp)))
 
 (defn handle-delete-response
-  [resp]
+  [resp uuid]
   (cond
    (<= 200 (:status resp) 299) uuid
    :else                       (request-failed resp)))
@@ -89,21 +93,21 @@
   [storage-map uuid obj-map & [extra-headers]]
   (-> (url-from-record storage-map uuid)
       (cl/put (request-map obj-map extra-headers) {:throw-exceptions false})
-      handle-put-post-response))
+      (handle-put-post-response uuid)))
 
 (defn post-object
   "Issues a POST request to update an object in Riak."
   [storage-map uuid obj-map & [extra-headers]]
   (-> (url-from-record storage-map uuid)
       (cl/post (request-map obj-map extra-headers) {:throw-exceptions false})
-      handle-put-post-response))
+      (handle-put-post-response uuid)))
 
 (defn delete-object
   "Issues a DELETE request to delete an object from Riak."
   [storage-map uuid]
   (-> (url-from-record storage-map uuid)
       (cl/delete {:throw-exceptions false})
-      handle-delete-response))
+      (handle-delete-response uuid)))
 
 (defmethod get-event-source "riak"
   [sm uuid]
