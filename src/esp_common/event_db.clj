@@ -50,56 +50,60 @@
            :status     (:status resp)
            :body       (:body resp)}))
 
+(defn handle-get-response
+  [resp]
+  (cond
+   (<= 200 (:status resp) 299)  (json/read-json (:body resp))
+   (= (:status resp) 404)       (hash-map)
+   :else                        (request-failed resp)))
+
+(defn handle-put-post-response
+  [resp]
+  (cond 
+   (<= 200 (:status resp) 299) uuid
+   :else                       (request-failed resp)))
+
+(defn handle-delete-response
+  [resp]
+  (cond
+   (<= 200 (:status resp) 299) uuid
+   :else                       (request-failed resp)))
+
+(defn request-map
+  [obj-map extra-headers]
+  {:content-type :json
+   :body (json/json-str obj-map)
+   :headers (merge
+             extra-headers
+             {"X-Riak-Meta-ESP-LastModified" (str (time/now))})})
+
 (defn get-object
   "Issues a GET request for an object stored in Riak."
   [storage-map uuid]
-  (let [obj-url (url-from-record storage-map uuid)
-        resp (cl/get obj-url {:throw-exceptions false})]
-    (cond
-     (<= 200 (:status resp) 299)  (json/read-json (:body resp))
-     (= (:status resp) 404)       (hash-map)
-     :else                        (request-failed resp))))
+  (-> (url-from-record storage-map uuid)
+      (cl/get {:throw-exceptions false})
+      handle-get-response))
 
 (defn put-object
   "Issues a PUT request to place an object into Riak."
   [storage-map uuid obj-map & [extra-headers]]
-  (let [obj-url (url-from-record storage-map uuid)
-        resp (cl/put
-              obj-url
-              {:content-type :json
-               :body (json/json-str obj-map)
-               :headers (merge
-                         extra-headers
-                         {"X-Riak-Meta-ESP-LastModified" (str (time/now))})}
-              {:throw-exceptions false})]
-    (cond 
-     (<= 200 (:status resp) 299) uuid
-     :else                       (request-failed resp))))
+  (-> (url-from-record storage-map uuid)
+      (cl/put (request-map obj-map extra-headers) {:throw-exceptions false})
+      handle-put-post-response))
 
 (defn post-object
   "Issues a POST request to update an object in Riak."
   [storage-map uuid obj-map & [extra-headers]]
-  (let [obj-url (url-from-record storage-map uuid)
-        resp (cl/post
-              obj-url
-              {:content-type :json
-               :body (json/json-str obj-map)
-               :headers (merge
-                         extra-headers
-                         {"X-Riak-Meta-ESP-LastModified" (str (time/now))})}
-              {:throw-exceptions false})]
-    (cond
-     (<= 200 (:status resp) 299) uuid
-     :else                       (request-failed resp))))
+  (-> (url-from-record storage-map uuid)
+      (cl/post (request-map obj-map extra-headers) {:throw-exceptions false})
+      handle-put-post-response))
 
 (defn delete-object
   "Issues a DELETE request to delete an object from Riak."
   [storage-map uuid]
-  (let [obj-url (url-from-record storage-map uuid)
-        resp (cl/delete obj-url {:throw-exceptions false})]
-    (cond
-      (<= 200 (:status resp) 299) uuid
-      :else                       (request-failed resp))))
+  (-> (url-from-record storage-map uuid)
+      (cl/delete {:throw-exceptions false})
+      handle-delete-response))
 
 (defmethod get-event-source "riak"
   [sm uuid]
