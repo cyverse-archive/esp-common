@@ -55,3 +55,83 @@
                     :status 404
                     :body "Couldn't find event."})
 
+;;;(esp-common.event-db) testing
+
+(def riak-sm {:riak-base "http://testing.com"
+              :riak-port "3333"
+              :riak-bucket "bucket"})
+
+(fact
+ (riak-obj-path "foo" "bar") => "/buckets/foo/keys/bar"
+ (fix-port 404) => 404
+ (fix-port "404") => 404
+
+ (riak-url "http://foo.com" 3333 "bucket" "key") =>
+ "http://foo.com:3333/buckets/bucket/keys/key"
+
+ (riak-url "http://foo.com" 3333 "bucket" "key" {:query "value"}) =>
+ "http://foo.com:3333/buckets/bucket/keys/key?query=value"
+
+ (url-from-record riak-sm "uuid") =>
+ "http://testing.com:3333/buckets/bucket/keys/uuid"
+
+ (handle-get-response {:status 200 :body "{\"test\":\"value\"}"}) =>
+ {:test "value"}
+
+ (handle-get-response {:status 204 :body "{\"test\":\"value\"}"}) =>
+ {:test "value"}
+
+ (handle-get-response {:status 299 :body "{\"test\":\"value\"}"}) =>
+ {:test "value"}
+
+ (handle-get-response {:status 404}) => {}
+
+ (try+
+  (handle-get-response {:status 500 :body "Hurr"})
+  (catch :error_code error-map error-map)) =>
+  {:error_code "ERR_REQUEST_FAILED"
+   :status 500
+   :body "Hurr"}
+
+  (handle-put-post-response {:status 200} "uuid") => "uuid"
+  (handle-put-post-response {:status 204} "uuid") => "uuid"
+  (handle-put-post-response {:status 299} "uuid") => "uuid"
+
+  (try+
+   (handle-put-post-response {:status 500 :body "Derp"} "uuid")
+   (catch :error_code error-map error-map)) =>
+   {:error_code "ERR_REQUEST_FAILED"
+    :status 500
+    :body "Derp"}
+   
+   (handle-delete-response {:status 200} "uuid") => "uuid"
+   (handle-delete-response {:status 204} "uuid") => "uuid"
+   (handle-delete-response {:status 299} "uuid") => "uuid"
+   
+   (try+
+    (handle-delete-response {:status 500 :body "Herp"} "uuid")
+    (catch :error_code error-map error-map)) =>
+    {:error_code "ERR_REQUEST_FAILED"
+     :status 500
+     :body "Herp"})
+
+(fact
+ (request-map {:foo "bar"} {"extra" "headers"}) => #(contains? %1 :content-type)
+ (request-map {:foo "bar"} {"extra" "headers"}) => #(contains? %1 :body)
+ (request-map {:foo "bar"} {"extra" "headers"}) => #(contains? %1 :headers)
+
+ (get (request-map {:foo "bar"} {"extra" "headers"}) :content-type) => :json
+ (get (request-map {:foo "bar"} {"extra" "headers"}) :body) =>
+ "{\"foo\":\"bar\"}"
+
+ (get-in
+  (request-map {:foo "bar"} {"extra" "headers"})
+  [:headers "X-Riak-Meta-ESP-LastModified"]) => string?
+
+  (get-in
+   (request-map {:foo "bar"} {"extra" "headers"})
+   [:headers "extra"]) => "headers")
+
+(fact
+ (nest-data {} {:foo "bar"}) => {:foo "bar" :data {}})
+
