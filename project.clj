@@ -2,8 +2,8 @@
   :description "Code common to the ESP components."
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.logging "0.2.3"]
-                 [org.clojure/data.json "0.1.2"]
-                 [org.iplantc/clojure-commons "1.2.1-SNAPSHOT"]
+                 [org.iplantc/clojure-commons "1.4.0-SNAPSHOT"]
+                 [cheshire "5.0.1"]
                  [clj-http "0.5.3"]
                  [clj-time "0.4.3"]
                  [slingshot "0.10.1"]

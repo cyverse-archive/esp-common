@@ -3,9 +3,9 @@
         clojure-commons.error-codes
         esp-common.uuid
         esp-common.storage)
-  (:require [clj-http.client :as cl]
+  (:require [cheshire.core :as cheshire]
+            [clj-http.client :as cl]
             [clj-time.core :as time]
-            [clojure.data.json :as json]
             [clojure-commons.file-utils :as ft]
             [cemerick.url :as url]))
 
@@ -57,13 +57,13 @@
 (defn handle-get-response
   [resp]
   (cond
-   (<= 200 (:status resp) 299)  (json/read-json (:body resp))
+   (<= 200 (:status resp) 299)  (cheshire/decode (:body resp) true)
    (= (:status resp) 404)       (hash-map)
    :else                        (request-failed resp)))
 
 (defn handle-put-post-response
   [resp uuid]
-  (cond 
+  (cond
    (<= 200 (:status resp) 299) uuid
    :else                       (request-failed resp)))
 
@@ -76,7 +76,7 @@
 (defn request-map
   [obj-map extra-headers]
   {:content-type :json
-   :body (json/json-str obj-map)
+   :body (cheshire/encode obj-map)
    :headers (merge
              extra-headers
              {"X-Riak-Meta-ESP-LastModified" (str (time/now))})})
@@ -140,9 +140,3 @@
 (defmethod delete-event "riak"
   [sm uuid]
   (delete-object sm uuid))
-
-
-
-
-
-
