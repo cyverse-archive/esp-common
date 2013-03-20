@@ -1,6 +1,6 @@
 (defproject esp-common "0.1.1-SNAPSHOT"
   :description "Code common to the ESP components."
-  :dependencies [[org.clojure/clojure "1.5.0"]
+  :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.logging "0.2.6"]
                  [org.iplantc/clojure-commons "1.4.1-SNAPSHOT"]
                  [cheshire "5.0.2"]
